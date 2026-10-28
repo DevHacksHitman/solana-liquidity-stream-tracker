@@ -1,0 +1,40 @@
+# --- secrets and key material: never in git ---
+wallets/
+*.keypair.json
+secrets/
+*.pem
+
+# --- environment files (placeholders stay; real values never) ---
+.env
+.env.*
+!.env.example
+!web/.env.example
+
+# --- private working notes and transcript dumps ---
+markdown_files/
+*.local.md
+*.plan.md
+.notes/
+private_docs/
+PUMPCHA?.md
+
+# --- junk, caches, artifacts ---
+.DS_Store
+AppleDouble
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+*.log
+*.part
+*.tmp
+
+# --- runtime data ---
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- local test artifacts ---
+test_downloads/
+downloads_test/
