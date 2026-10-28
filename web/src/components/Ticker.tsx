@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 
 type TradeRow = {
   signature: string;
-  trader?: string;
-  isBuy?: boolean;
+  traderPublicKey?: string;
+  txType?: string;
+  mint?: string;
   solAmount?: number | string;
 };
 
@@ -23,22 +24,33 @@ export const Ticker = () => {
 
     let ws: WebSocket | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
+    let disposed = false;
 
     const open = () => {
+      if (disposed) return;
       ws = new WebSocket(streamUrl);
       ws.onopen = () => {
         setStatus("live");
         if (mint) {
           ws!.send(JSON.stringify({ method: "subscribeTokenTrade", keys: [mint] }));
         } else {
-          ws!.send(JSON.stringify({ method: "subscribeNewTrades" }));
+          ws!.send(JSON.stringify({ method: "subscribeNewToken" }));
         }
       };
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data.errors) {
+            console.warn("stream rejected the subscription:", data.errors);
+            return;
+          }
           if (data.signature) {
-            setTrades((prev) => [data as TradeRow, ...prev].slice(0, 5));
+            setTrades((prev) =>
+              [
+                data as TradeRow,
+                ...prev.filter((t) => t.signature !== data.signature),
+              ].slice(0, 5),
+            );
           }
         } catch {
           /* ignore malformed frames */
@@ -46,13 +58,14 @@ export const Ticker = () => {
       };
       ws.onclose = () => {
         setStatus("idle");
-        retry = setTimeout(open, 3000);
+        if (!disposed) retry = setTimeout(open, 3000);
       };
       ws.onerror = () => ws?.close();
     };
 
     open();
     return () => {
+      disposed = true;
       if (retry) clearTimeout(retry);
       ws?.close();
     };
@@ -73,10 +86,10 @@ export const Ticker = () => {
         {trades.map((tx, i) => (
           <div key={i} className="text-xs flex justify-between animate-pulse">
             <span className="text-white/60 truncate max-w-[60%]">
-              {tx.trader ?? tx.signature.slice(0, 12)}
+              {tx.traderPublicKey ?? tx.signature.slice(0, 12)}
             </span>
-            <span className={tx.isBuy === false ? "text-red-400" : "text-green-500"}>
-              {tx.isBuy === false ? "sell" : "buy"}
+            <span className={tx.txType === "sell" ? "text-red-400" : "text-green-500"}>
+              {tx.txType ?? "event"}
               {tx.solAmount !== undefined ? ` · ${tx.solAmount} SOL` : ""}
             </span>
           </div>
