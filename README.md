@@ -68,6 +68,15 @@ covered by a conditional test that skips while `websockets` is installed.
     npm install
     npm run dev
 
+The ticker follows pumpportal's **free creation stream** by default — the
+platform's only keyless, mint-less subscription. Per-token trade streams
+(`subscribeTokenTrade`) are a paid provider feature that requires a funded
+API key; if you set `VITE_TOKEN_MINT` without a key, the widget says so on
+screen and keeps following the creation stream. An empty ticker during a
+quiet market is the provider's tier, not a defect in this code —
+program-level trade capture over free public RPC (`logsSubscribe`) is the
+server listener's job.
+
 ## Repository hygiene
 
 - Commits use the GitHub noreply email; no personal addresses in history.
@@ -88,5 +97,8 @@ covered by a conditional test that skips while `websockets` is installed.
   amounts and counterparties are stored from fetched metadata when the RPC
   provides it, otherwise as NULL.
 - There is no historical backfill: the listener records what arrives live.
+- The browser ticker follows the free creation stream; per-token trade
+  streams require a funded pumpportal API key. Program-level trade capture
+  — the free path — is the server listener's job (`logsSubscribe`).
 - The default public RPC endpoints are rate-limited; point `SOLANA_RPC`
   and `SOLANA_WS` at a provider of your choice for sustained use.
