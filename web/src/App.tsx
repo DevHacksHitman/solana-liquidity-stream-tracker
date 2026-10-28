@@ -4,7 +4,7 @@ import { ShieldCheck, Zap, TrendingUp, Database } from "lucide-react";
 
 function App() {
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-green-500 selection:text-black">
+    <div className="min-h-screen w-full bg-[#050505] text-white selection:bg-green-500 selection:text-black">
       {/* Hero */}
       <section className="relative pt-20 pb-32 px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto text-center relative z-10">
