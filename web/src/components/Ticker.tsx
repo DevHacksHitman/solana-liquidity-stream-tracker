@@ -13,6 +13,7 @@ type Status = "idle" | "live" | "error";
 export const Ticker = () => {
   const [trades, setTrades] = useState<TradeRow[]>([]);
   const [status, setStatus] = useState<Status>("idle");
+  const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
     const streamUrl = import.meta.env.VITE_PUMP_PORTAL_WS;
@@ -22,6 +23,7 @@ export const Ticker = () => {
       return;
     }
 
+    const apiKey = import.meta.env.VITE_PUMP_PORTAL_API_KEY;
     let ws: WebSocket | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let disposed = false;
@@ -31,9 +33,17 @@ export const Ticker = () => {
       ws = new WebSocket(streamUrl);
       ws.onopen = () => {
         setStatus("live");
-        if (mint) {
+        if (mint && apiKey) {
           ws!.send(JSON.stringify({ method: "subscribeTokenTrade", keys: [mint] }));
         } else {
+          if (mint && !apiKey) {
+            setNote(
+              "Per-token streams need a funded pumpportal key — following the free creation stream."
+            );
+            console.warn(
+              "VITE_TOKEN_MINT is set but per-token streams need a funded pumpportal API key (VITE_PUMP_PORTAL_API_KEY); following the free creation stream instead."
+            );
+          }
           ws!.send(JSON.stringify({ method: "subscribeNewToken" }));
         }
       };
@@ -41,6 +51,11 @@ export const Ticker = () => {
         try {
           const data = JSON.parse(event.data);
           if (data.errors) {
+            const message =
+              typeof data.errors === "string"
+                ? data.errors
+                : JSON.stringify(data.errors);
+            setNote(`Stream provider says: ${message}`);
             console.warn("stream rejected the subscription:", data.errors);
             return;
           }
@@ -79,6 +94,7 @@ export const Ticker = () => {
           {status}
         </span>
       </div>
+      {note && <div className="text-[10px] text-white/40 mb-2">{note}</div>}
       <div className="space-y-2">
         {trades.length === 0 && (
           <div className="text-xs text-white/40">waiting for events…</div>
